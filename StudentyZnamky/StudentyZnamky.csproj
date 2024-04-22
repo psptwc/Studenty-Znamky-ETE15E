@@ -7,8 +7,4 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Compile Include="C:\Users\ilyas\OneDrive\Рабочий стол\Prog Proj C#\Program.cs" Link="Program.cs" />
-  </ItemGroup>
-
 </Project>
