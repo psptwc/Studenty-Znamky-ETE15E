@@ -33,11 +33,46 @@ namespace StudentyZnamky
             return new Student(name, lastname, studentID);
         }
     }
+
+    public class Subject
+    {
+        public string Name { get; set; }
+        public int SubjectID { get; set; }
+        public int Grade { get; set; }
+
+        public Subject(string name, int subjectID, int grade)
+        {
+            Name = name;
+            SubjectID = subjectID;
+            Grade = grade;
+        }
+
+        public static Subject AddSubject()
+        {
+            Console.Write("Zadejte nazev: ");
+            string name = Console.ReadLine();
+            Console.Write("Zadejte ID predmeta: ");
+            int subjectID = int.Parse(Console.ReadLine());
+            Console.Write("Zadejte znamku: ");
+            int grade = int.Parse(Console.ReadLine());
+
+            return new Subject(name, subjectID, grade);
+        }
+    }
+
+    public struct StudentSubject
+    {
+        public Student Student { get; set; }
+        public Subject Subject { get; set; }
+    }
+
     internal class Program
     {
         static void Main(string[] args)
         {
-            List<Student> studentList = new List<Student>();
+            //Dictionary<Student, List<Subject>> studentSubjects = new Dictionary<Student, List<Subject>>();
+            List<StudentSubject> studentSubject = new List<StudentSubject>();
+            //List<Student> studentList = new List<Student>();
 
             char answer;
             while (true)
@@ -52,12 +87,15 @@ namespace StudentyZnamky
                 {
                     case 'p':
                         Console.Clear();
-                        studentList.Add(Student.AddStudent());
+                        studentSubject.Add(new StudentSubject { 
+                            Student = Student.AddStudent(), 
+                            Subject = Subject.AddSubject() });
                         break;
                     case 'v':
                         Console.Clear();
-                        foreach (Student student in studentList)
-                            Console.WriteLine($"{student.StudentID} {student.Name} {student.Lastname}");
+                        foreach (StudentSubject i in studentSubject)
+                            Console.WriteLine($"{i.Student.StudentID} {i.Student.Name} {i.Student.Lastname}\n" +
+                                              $"{i.Subject.SubjectID} {i.Subject.Name} {i.Subject.Grade}\n");
                         Console.ReadKey();
                         break;
                     case 'q':
