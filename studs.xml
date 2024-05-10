@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<studentsubject>
+    <student>
+        <studentid>33</studentid>
+        <firstname>Veronika</firstname>
+        <lastname>Horakova</lastname>
+        <subjectid>101</subjectid>
+        <subjectname>Psychologie</subjectname>
+        <grade>4</grade>
+    </student>
+    <student>
+        <studentid>33</studentid>
+        <firstname>Veronika</firstname>
+        <lastname>Horakova</lastname>
+        <subjectid>102</subjectid>
+        <subjectname>Matematika</subjectname>
+        <grade>1</grade>
+    </student>
+    <student>
+        <studentid>34</studentid>
+        <firstname>Jan</firstname>
+        <lastname>Smital</lastname>
+        <subjectid>101</subjectid>
+        <subjectname>Psychologie</subjectname>
+        <grade>2</grade>
+    </student>
+</studentsubject>

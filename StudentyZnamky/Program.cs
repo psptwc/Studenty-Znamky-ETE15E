@@ -3,6 +3,9 @@ using System.IO;
 using System.Collections.Generic;
 using static StudentyZnamky.Program;
 using System.Diagnostics;
+using System.Xml;
+using System.Threading;
+using System.Xml.Serialization;
 
 namespace StudentyZnamky
 {
@@ -11,12 +14,12 @@ namespace StudentyZnamky
         public struct Student
         {
             public int StudentID { get; set; }
-            public string Name { get; set; }
+            public string Firstname { get; set; }
             public string Lastname { get; set; }
-            public Student(int studentID, string name, string lastname)
+            public Student(int studentID, string firstname, string lastname)
             {
                 StudentID = studentID;
-                Name = name;
+                Firstname = firstname;
                 Lastname = lastname;
             }
 
@@ -40,7 +43,7 @@ namespace StudentyZnamky
 
             public static void PrintStudent(Student student)
             {
-                Console.Write($"{student.StudentID} {student.Name} {student.Lastname} ");
+                Console.Write($"{student.StudentID} {student.Firstname} {student.Lastname} ");
             }
         }
 
@@ -76,7 +79,7 @@ namespace StudentyZnamky
             }
         }
 
-        public struct StudentSubject
+        public struct StudentSubject : IComparable<StudentSubject>
         {
             public Student Student { get; set; }
             public Subject Subject { get; set; }
@@ -102,6 +105,14 @@ namespace StudentyZnamky
 
                 return grade;
             }
+            public int CompareTo(StudentSubject other)
+            {
+                int studentIDComparison = this.Student.StudentID.CompareTo(other.Student.StudentID);
+                if (studentIDComparison != 0)
+                    return studentIDComparison;
+
+                return this.Subject.SubjectID.CompareTo(other.Subject.SubjectID);
+            }
         }
 
         static List<string[]> ReadFromCSV(string rootPath)
@@ -120,44 +131,107 @@ namespace StudentyZnamky
                     }
                 }
             }
-            catch (FileNotFoundException)
+            catch (Exception ex)
             {
-                Console.WriteLine("Soubor nebyl nalezen");
-            }
-            catch (IOException ex)
-            {
-                Console.WriteLine("Chyba pri cteni soubora " + ex.Message);
+                Console.WriteLine(ex.Message);
+                Console.ReadKey();
             }
             return data;
+        }
+
+        static List<StudentSubject> ReadFromXML(string rootPath)
+        {
+            List<string> tempStudSubj = new List<string>(6);
+            List<StudentSubject> studentSubject = new List<StudentSubject>();
+            
+            XmlDocument xDoc = new XmlDocument();
+            try
+            {
+                xDoc.Load(rootPath);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                Console.ReadKey();
+            }
+            XmlElement? xRoot = xDoc.DocumentElement;
+
+            if (xRoot != null)
+            {
+                foreach (XmlElement xnode in xRoot)
+                {
+                    foreach(XmlNode childnode in xnode.ChildNodes)
+                    {
+                        switch (childnode.Name)
+                        {
+                            case "studentid":
+                                tempStudSubj.Add(childnode.InnerText);
+                                break;
+                            case "firstname":
+                                tempStudSubj.Add(childnode.InnerText);
+                                break;
+                            case "lastname":
+                                tempStudSubj.Add(childnode.InnerText);
+                                break;
+                            case "subjectid":
+                                tempStudSubj.Add(childnode.InnerText);
+                                break;
+                            case "subjectname":
+                                tempStudSubj.Add(childnode.InnerText);
+                                break;
+                            case "grade":
+                                tempStudSubj.Add(childnode.InnerText);
+                                break;
+                        }
+                    }
+                    studentSubject.Add(new StudentSubject
+                    {
+                        Student = new Student { StudentID = int.Parse(tempStudSubj[0]), Firstname = tempStudSubj[1], Lastname = tempStudSubj[2] },
+                        Subject = new Subject { SubjectID = int.Parse(tempStudSubj[3]), Name = tempStudSubj[4] },
+                        Grade = int.Parse(tempStudSubj[5])
+                    });
+                    tempStudSubj.Clear();
+                }
+            }
+
+            return studentSubject;
         }
 
         static void Main(string[] args)
         {
             List<StudentSubject> studentSubject = new List<StudentSubject>();
-            List<string[]> data;
+       
 
             char answer;
-            while (true)
+            bool runProgram = true;
+            int newGrade;
+            while (runProgram)
             {
                 Console.Clear();
+                Console.WriteLine("-------------------");
                 Console.WriteLine("Pridat studenta [e]");
-                Console.WriteLine("Nacist csv soubor studenty [c]");
-                Console.WriteLine("Nacist csv soubor predmety [x]");
+                Console.WriteLine("Nacist csv soubor [c]");
+                Console.WriteLine("Nacist xml soubor [b]");
                 Console.WriteLine("------------------------------");
                 Console.WriteLine("Vypsat data [v]");
                 Console.WriteLine("Vypsat studenta [s]");
                 Console.WriteLine("Vypsat predmet [p]");
+                Console.WriteLine("Ulozit data do csv [y]");
+                Console.WriteLine("Ulozit data do xml [t]");
                 Console.WriteLine("------------------");
-                //Console.WriteLine("Vymazat jednu znamku studenta [h]");
-                //Console.WriteLine("Vymazat studenta [j]");
-                //Console.WriteLine("Vymazat predmet [k]");
-                //Console.WriteLine("Zmenit znamku studenta [z]");
+                Console.WriteLine("Vymazat jednu znamku studenta [h]");
+                Console.WriteLine("Vymazat studenta [j]");
+                Console.WriteLine("Vymazat predmet [k]");
+                Console.WriteLine("Vymazat data [d]");
+                Console.WriteLine("Zmenit znamku studenta [z]");
                 Console.WriteLine("To quit [q]");
+                Console.WriteLine("-----------");
+                Console.Write("Zadejte akci: ");
                 answer = char.ToLower(Console.ReadKey().KeyChar);
 
                 switch (answer)
                 {
-                    case 'e':
+                    case 'e'://pridat studenta z konzole
                         Console.Clear();
                         studentSubject.Add(new StudentSubject
                         { 
@@ -166,7 +240,33 @@ namespace StudentyZnamky
                             Grade = StudentSubject.AddGrade()
                         });
                         break;
-                    case 'v':
+                    case 'c'://nacist data z csv souboru
+                        Console.Clear();
+                        Console.Write("Zadejte cestu souboru: ");
+                        string cestaCsv = Console.ReadLine();
+                        List<string[]> dataCsv = ReadFromCSV(cestaCsv);
+                        //C:\Users\ilyas\source\repos\StudentyZnamky\studsubj.csv
+                        foreach (var row in dataCsv)
+                        {
+                            studentSubject.Add(new StudentSubject
+                            {
+                            Student = new Student {StudentID = int.Parse(row[0]), Firstname = row[1], Lastname = row[2]},
+                            Subject = new Subject {SubjectID = int.Parse(row[3]), Name = row[4]},
+                            Grade = int.Parse(row[5])
+                            });
+                        }
+                        studentSubject.Sort();
+                        break;
+                    case 'b'://nacist data z xml souboru
+                        Console.Clear();
+                        Console.Write("Zadejte cestu souboru: ");
+                        string cestaXml = Console.ReadLine();
+                        List<StudentSubject> dataXml = ReadFromXML(cestaXml);
+
+                        studentSubject.AddRange(dataXml);
+                        studentSubject.Sort();
+                        break;
+                    case 'v'://vypsat data
                         Console.Clear();
                         foreach (StudentSubject i in studentSubject)
                         {
@@ -176,33 +276,7 @@ namespace StudentyZnamky
                         }
                         Console.ReadKey();
                         break;
-                    case 'c':
-                        Console.Clear();
-                        data = ReadFromCSV(@"C:\Users\ilyas\source\repos\StudentyZnamky\studsubj.csv");
-                        foreach (var row in data)
-                        {
-                            studentSubject.Add(new StudentSubject
-                            {
-                            Student = new Student {StudentID = int.Parse(row[0]), Name = row[1], Lastname = row[2]},
-                            Subject = new Subject {SubjectID = int.Parse(row[3]), Name = row[4]},
-                            Grade = int.Parse(row[5])
-                            });
-                        }
-                        break;
-                    case 'x':
-                        Console.Clear();
-                        data = ReadFromCSV(@"C:\Users\ilyas\source\repos\StudentyZnamky\subjstud.csv");
-                        foreach (var row in data)
-                        {
-                            studentSubject.Add(new StudentSubject
-                            {
-                                Student = new Student { StudentID = int.Parse(row[2]), Name = row[3], Lastname = row[4] },
-                                Subject = new Subject { SubjectID = int.Parse(row[0]), Name = row[1] },
-                                Grade = int.Parse(row[5])
-                            });
-                        }
-                        break;
-                    case 's':
+                    case 's'://vypsat znamky studenta
                         Console.Clear();
                         int idSt; //variable to get an id
                         bool studentExists = false; //variable to check if id exists
@@ -239,7 +313,7 @@ namespace StudentyZnamky
                         }
                         Console.ReadKey();
                         break;
-                    case 'p':
+                    case 'p'://vypsat znamky studentu za predmet
                         Console.Clear();
                         int idSb; //variable to get an id
                         bool subjectExists = false; //variable to check if id exists
@@ -276,13 +350,170 @@ namespace StudentyZnamky
                         }
                         Console.ReadKey();
                         break;
-                    case 'q':
+                    case 'y'://ukladani dat do csv
+                        int csvFileCount = 1;
+
+                        Console.Clear();
+                        string csvFilePath = $"data{csvFileCount}.csv";
+
+                        using (StreamWriter writer = new StreamWriter(csvFilePath, false))
+                        {
+                            foreach (StudentSubject row in studentSubject)
+                            {
+                                writer.WriteLine($"{row.Student.StudentID},{row.Student.Firstname},{row.Student.Lastname},{row.Subject.SubjectID},{row.Subject.Name},{row.Grade}");
+                            }
+                        }
+                        csvFileCount++;
+                        Console.WriteLine("Data jsou ulozeny " + csvFilePath);
+                        Console.ReadKey();
+
+                        break;
+                    case 't'://ukladani dat do xml
+                        int xmlFileCount = 1;
+
+                        Console.Clear();
+                        string xmlFilePath = $"data{xmlFileCount}.xml";
+
+                        XmlWriterSettings set = new XmlWriterSettings();
+                        set.Indent = true;
+
+                        using (XmlWriter writer = XmlWriter.Create(xmlFilePath, set))
+                        {
+                            writer.WriteStartDocument();
+                            writer.WriteStartElement("studentsubject");
+
+                            foreach (StudentSubject node in studentSubject)
+                            {
+                                writer.WriteStartElement("student");
+
+                                writer.WriteElementString("studentid", node.Student.StudentID.ToString());
+                                writer.WriteElementString("firstname", node.Student.Firstname);
+                                writer.WriteElementString("lastname", node.Student.Lastname);
+                                writer.WriteElementString("subjectid", node.Subject.SubjectID.ToString());
+                                writer.WriteElementString("subjectname", node.Subject.Name);
+                                writer.WriteElementString("grade", node.Grade.ToString());
+
+                                writer.WriteEndElement();
+                            }
+
+                            writer.WriteEndElement();
+                            writer.WriteEndDocument();
+                            writer.Flush();
+                        }
+                        xmlFileCount++;
+                        Console.WriteLine("Data jsou ulozeny " + xmlFilePath);
+                        Console.ReadKey();
+
+                        break;
+                    case 'h'://smazat znamku studenta jednoho predmeta
+                        Console.Clear();
+                        int tempStudId, tempSubjId;
+
+                        Console.Write("Zadejte id studenta: ");
+                        while (!int.TryParse(Console.ReadLine(), out tempStudId))
+                        {
+                            Console.WriteLine("Nezadal jste cislo nebo je spatne");
+                            Console.Write("Zadejte id studenta: ");
+                        }
+                        Console.Write("Zadejte id prerdmeta: ");
+                        while (!int.TryParse(Console.ReadLine(), out tempSubjId))
+                        {
+                            Console.WriteLine("Nezadal jste cislo nebo je spatne");
+                            Console.Write("Zadejte id predmeta: ");
+                        }
+
+                        foreach (var row in studentSubject)
+                        {
+                            if (row.Student.StudentID == tempStudId && row.Subject.SubjectID == tempSubjId)
+                            {
+                                studentSubject.Remove(row);
+                                break;
+                            }
+                        }
+                        break;
+                    case 'j'://smazat studenta
+                        Console.Clear();
+                        Console.Write("Zadejte id studenta: ");
+                        while (!int.TryParse(Console.ReadLine(), out tempStudId))
+                        {
+                            Console.WriteLine("Nezadal jste cislo nebo je spatne");
+                            Console.Write("Zadejte id studenta: ");
+                        }
+
+                        foreach (var row in studentSubject)
+                        {
+                            if (row.Student.StudentID == tempStudId)
+                            {
+                                studentSubject.Remove(row);
+                            }
+                        }
+                        break;
+                    case 'k'://smazat studenta
+                        Console.Clear();
+                        Console.Write("Zadejte id predmeta: ");
+                        while (!int.TryParse(Console.ReadLine(), out tempSubjId))
+                        {
+                            Console.WriteLine("Nezadal jste cislo nebo je spatne");
+                            Console.Write("Zadejte id predmeta: ");
+                        }
+
+                        foreach (var row in studentSubject)
+                        {
+                            if (row.Subject.SubjectID == tempSubjId)
+                            {
+                                studentSubject.Remove(row);
+                            }
+                        }
+                        break;
+                    case 'd':
+                        Console.Clear();
+                        Console.WriteLine("Chcete smazat data? [y]");
+                        if (Console.ReadKey().KeyChar == 'y')
+                            studentSubject.Clear();
+                        break;
+                    case 'z'://zmena znamky studenta za predmet
+                        Console.Clear();
+                        int indexList;
+                        Console.Write("Zadejte id studenta: ");
+                        while (!int.TryParse(Console.ReadLine(), out tempStudId) || tempStudId < 0)
+                        {
+                            Console.WriteLine("Nezadal jste cislo nebo je spatne");
+                            Console.Write("Zadejte id studenta: ");
+                        }
+                        Console.Write("Zadejte id prerdmeta: ");
+                        while (!int.TryParse(Console.ReadLine(), out tempSubjId) || tempSubjId < 0)
+                        {
+                            Console.WriteLine("Nezadal jste cislo nebo je spatne");
+                            Console.Write("Zadejte id predmeta: ");
+                        }
+                        Console.Write("Zadejte novou znamku: ");
+                        while (!int.TryParse(Console.ReadLine(), out newGrade) || newGrade > 4 || newGrade < 1)
+                        {
+                            Console.WriteLine("Nezadal jste cislo nebo je spatne");
+                            Console.Write("Zadejte novou znamku: ");
+                        }
+
+                        foreach (var row in studentSubject)
+                        {
+                            if (row.Student.StudentID == tempStudId && row.Subject.SubjectID == tempSubjId)
+                            {
+                                indexList = studentSubject.IndexOf(row);
+                                studentSubject[indexList] = new StudentSubject
+                                {
+                                    Student = new Student { StudentID = row.Student.StudentID, Firstname = row.Student.Firstname, Lastname = row.Student.Lastname },
+                                    Subject = new Subject { SubjectID = row.Subject.SubjectID, Name = row.Subject.Name },
+                                    Grade = newGrade
+                                };
+                                break;
+                            }
+                        }
+                        break;
+                    case 'q'://ukoncit program
+                        runProgram = false;
                         break;
                     default:
                         break;
                 }
-                if (answer == 'q')
-                    break;
             }
         }
     }

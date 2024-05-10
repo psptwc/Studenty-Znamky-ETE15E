@@ -1,6 +1,6 @@
-111,Pravo,10,Veronika,Kucerova,1
-111,Pravo,11,Pavel,Novotny,2
-112,Algoritmizace,12,Marek,Simunek,2
-105,Anglictina,13,Katerina,Novakova,3
-113,Objektove modelovani,11,Pavel,Novotny,2
-101,Psychologie,10,Veronika,Kucerova,3
+10,Veronika,Kucerova,111,Pravo,1
+11,Pavel,Novotny,111,Pravo,2
+12,Marek,Simunek,112,Algoritmizace,2
+13,Katerina,Novakova,105,Anglictina,3
+11,Pavel,Novotny,113,Objektove modelovani,2
+10,Veronika,Kucerova,101,Psychologie,3
