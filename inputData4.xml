@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<studentsubject>
+    <student>
+        <studentid>41</studentid>
+        <firstname>Martin</firstname>
+        <lastname>Novak</lastname>
+        <subjectid>113</subjectid>
+        <subjectname>Objektove modelovani</subjectname>
+        <grade>3</grade>
+    </student>
+    <student>
+	<studentid>41</studentid>
+        <firstname>Martin</firstname>
+        <lastname>Novak</lastname>
+        <subjectid>102</subjectid>
+        <subjectname>Matematika</subjectname>
+        <grade>3</grade>
+    </student>
+    <student>
+        <studentid>10</studentid>
+        <firstname>Veronika</firstname>
+        <lastname>Kucerova</lastname>
+        <subjectid>102</subjectid>
+        <subjectname>Matematika</subjectname>
+        <grade>1</grade>
+    </student>
+    <student>
+        <studentid>34</studentid>
+        <firstname>Jan</firstname>
+        <lastname>Smital</lastname>
+        <subjectid>111</subjectid>
+        <subjectname>Pravo</subjectname>
+        <grade>1</grade>
+    </student>
+    <student>
+        <studentid>42</studentid>
+        <firstname>Petr</firstname>
+        <lastname>Kovarik</lastname>
+        <subjectid>105</subjectid>
+        <subjectname>Anglicitna</subjectname>
+        <grade>2</grade>
+    </student>
+    <student>
+        <studentid>11</studentid>
+        <firstname>Pavel</firstname>
+        <lastname>Novotny</lastname>
+        <subjectid>112</subjectid>
+        <subjectname>Algoritmizace</subjectname>
+        <grade>1</grade>
+    </student>
+</studentsubject>

@@ -24,4 +24,28 @@
         <subjectname>Psychologie</subjectname>
         <grade>2</grade>
     </student>
+    <student>
+        <studentid>34</studentid>
+        <firstname>Jan</firstname>
+        <lastname>Smital</lastname>
+        <subjectid>102</subjectid>
+        <subjectname>Matematika</subjectname>
+        <grade>2</grade>
+    </student>
+    <student>
+        <studentid>34</studentid>
+        <firstname>Jan</firstname>
+        <lastname>Smital</lastname>
+        <subjectid>105</subjectid>
+        <subjectname>Anglicitna</subjectname>
+        <grade>1</grade>
+    </student>
+    <student>
+        <studentid>5</studentid>
+        <firstname>Tereza</firstname>
+        <lastname>Novakova</lastname>
+        <subjectid>102</subjectid>
+        <subjectname>Matematika</subjectname>
+        <grade>4</grade>
+    </student>
 </studentsubject>

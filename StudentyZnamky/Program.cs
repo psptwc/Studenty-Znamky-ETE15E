@@ -3,6 +3,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Xml;
 using System.Xml.Linq;
+using System.Linq;
 
 namespace StudentyZnamky
 {
@@ -37,9 +38,20 @@ namespace StudentyZnamky
                 }
                 Console.Write("Zadejte jmeno: ");
                 string name = Console.ReadLine();
+                while (string.IsNullOrEmpty(name) || !name.All(char.IsLetter))
+                {
+                    Console.WriteLine("Nemusi byt praznde a musi obsahovat jenom pismena");
+                    Console.Write("Zadejte jmeno: ");
+                    name = Console.ReadLine();
+                }
                 Console.Write("Zadejte prijmeni: ");
                 string lastname = Console.ReadLine();
-
+                while (string.IsNullOrEmpty(lastname) || !lastname.All(char.IsLetter))
+                {
+                    Console.WriteLine("Nemusi byt praznde a musi obsahovat jenom pismena");
+                    Console.Write("Zadejte jmeno: ");
+                    lastname = Console.ReadLine();
+                }
                 return new Student(studentID, name, lastname);
             }
 
@@ -72,7 +84,12 @@ namespace StudentyZnamky
                 }
                 Console.Write("Zadejte nazev predmeta: ");
                 string name = Console.ReadLine();
-
+                while (string.IsNullOrEmpty(name) || !name.All(char.IsLetter))
+                {
+                    Console.WriteLine("Nemusi byt praznde a musi obsahovat jenom pismena");
+                    Console.Write("Zadejte jmeno: ");
+                    name = Console.ReadLine();
+                }
                 return new Subject(subjectID, name);
             }
 
@@ -174,27 +191,14 @@ namespace StudentyZnamky
                     {
                         string line = reader.ReadLine();
                         string[] values = line.Split(',');
-                        
-                        //if's are needed to check if a csv file has the right format and valid data
-                        if (values.Length != 6)
-                        {
-                            csvFormatCheck = false;
-                            continue;
-                        }
 
-                        if (!int.TryParse(values[0], out tempInt) || tempInt <= 0)
-                        {
-                            csvFormatCheck = false;
-                            continue;
-                        }
-
-                        if (!int.TryParse(values[3], out tempInt) || tempInt <= 0)
-                        {
-                            csvFormatCheck = false;
-                            continue;
-                        }
-
-                        if (!int.TryParse(values[5], out tempInt) || tempInt > 4 || tempInt < 1)
+                        if (!int.TryParse(values[5], out tempInt) || tempInt > 4 || tempInt < 1 ||
+                            !int.TryParse(values[3], out tempInt) || tempInt <= 0 ||
+                            !int.TryParse(values[0], out tempInt) || tempInt <= 0 ||
+                            string.IsNullOrEmpty(values[1]) || !values[1].All(char.IsLetter) ||
+                            string.IsNullOrEmpty(values[2]) || !values[2].All(char.IsLetter) ||
+                            string.IsNullOrEmpty(values[4]) || !values[4].All(char.IsLetter) ||
+                            values.Length != 6)
                         {
                             csvFormatCheck = false;
                             continue;
@@ -251,19 +255,12 @@ namespace StudentyZnamky
                         continue;
                     }
 
-                    if (!int.TryParse(studentElement.Element("studentid").Value, out tempInt))
-                    {
-                        xmlFormatCheck = false;
-                        continue;
-                    }
-
-                    if (!int.TryParse(studentElement.Element("subjectid").Value, out tempInt))
-                    {
-                        xmlFormatCheck = false;
-                        continue;
-                    }
-
-                    if (!int.TryParse(studentElement.Element("grade").Value, out tempInt))
+                    if (!int.TryParse(studentElement.Element("grade").Value, out tempInt) || tempInt > 4 || tempInt < 1 ||
+                        !int.TryParse(studentElement.Element("subjectid").Value, out tempInt) || tempInt <= 0 ||
+                        !int.TryParse(studentElement.Element("studentid").Value, out tempInt) || tempInt <= 0 ||
+                        string.IsNullOrEmpty(studentElement.Element("firstname").Value) || !studentElement.Element("firstname").Value.All(char.IsLetter) ||
+                        string.IsNullOrEmpty(studentElement.Element("lastname").Value) || !studentElement.Element("lastname").Value.All(char.IsLetter) ||
+                        string.IsNullOrEmpty(studentElement.Element("subjectname").Value) || !studentElement.Element("subjectname").Value.All(char.IsLetter))
                     {
                         xmlFormatCheck = false;
                         continue;
@@ -590,6 +587,7 @@ namespace StudentyZnamky
 
                     //Delete a grade of a student in one subject
                     case 'h':
+                        bool gradeDeleted = false;
                         Console.Clear();
 
                         Console.WriteLine("Chcete znamku studenta? [y]");
@@ -621,9 +619,16 @@ namespace StudentyZnamky
                             {
                                 //Deletes data using List.Remove()
                                 studentSubject.Remove(row);
+                                gradeDeleted = true;
                                 break;
                             }
                         }
+                        if (!gradeDeleted)
+                        {
+                            Console.WriteLine("ID studenta nebo predmeta nebyl nalezen");
+                            Console.ReadKey();
+                        }
+
                         break;
 
                     //Delete all data of a student
@@ -699,6 +704,7 @@ namespace StudentyZnamky
                     //Change a grade of a student in a subject
                     case 'z':
                         int newGrade, indexList;
+                        bool gradeChanged = false;
 
                         Console.Clear();
 
@@ -743,8 +749,14 @@ namespace StudentyZnamky
                                     Subject = new Subject { SubjectID = row.Subject.SubjectID, Name = row.Subject.Name },
                                     Grade = newGrade
                                 };
+                                gradeChanged = true;
                                 break;
                             }
+                        }
+                        if (!gradeChanged)
+                        {
+                            Console.WriteLine("ID studenta nebo predmetu nebyl nalezen");
+                            Console.ReadKey();
                         }
                         break;
 
