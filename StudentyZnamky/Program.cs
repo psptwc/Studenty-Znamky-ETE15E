@@ -1,18 +1,14 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
-using static StudentyZnamky.Program;
-using System.Diagnostics;
 using System.Xml;
-using System.Threading;
-using System.Xml.Serialization;
-using System.Security.Cryptography;
 using System.Xml.Linq;
 
 namespace StudentyZnamky
 {
     internal class Program
     {
+        //Variables used in switch case
         static int xmlFileCount = 1;
         static int csvFileCount = 1;
         static int studID, subjID;
@@ -126,42 +122,36 @@ namespace StudentyZnamky
 
                 return this.Subject.SubjectID.CompareTo(other.Subject.SubjectID);
             }
-            /*
-             * Overriden method Equals()
-             * Needed to compare StudentSubject
-             * Method compares data by student ID and subject ID
-             */
-            public override bool Equals(object obj)
-            {
-                if (obj == null || !(obj is StudentSubject))
-                {
-                    return false;
-                }
-
-                StudentSubject other = (StudentSubject)obj;
-                return this.Student.StudentID.Equals(other.Student.StudentID) &&
-                       this.Subject.SubjectID.Equals(other.Subject.SubjectID);
-            }
 
             /*
              * DeleteDuplicates() deletes the same data if exist
-             * Going through List in reverse to be able to
-             * Delete and rewrite data at the same time
+             * Going through List in reverse to be able to delete data
              * Because List.Remove() shifts indexes whene data gets deleted
              */
             public static void DeleteDuplicates(List<StudentSubject> studentSubject)
             {
+                bool checkDuplicates = false;
                 for (int i = studentSubject.Count - 1; i >= 0; i--)
                 {
                     for (int j = i - 1; j >= 0; j--)
                     {
-                        if (studentSubject[i].Equals(studentSubject[j]))
+                        if (studentSubject[i].Student.StudentID == studentSubject[j].Student.StudentID)
                         {
-                            studentSubject[j] = studentSubject[i];
-                            studentSubject.Remove(studentSubject[j]);
-                            break;
+                            if (studentSubject[i].Subject.SubjectID == studentSubject[j].Subject.SubjectID ||
+                                !studentSubject[i].Student.Firstname.Equals(studentSubject[j].Student.Firstname) ||
+                                !studentSubject[i].Student.Lastname.Equals(studentSubject[j].Student.Lastname))
+                            {
+                                studentSubject.RemoveAt(i);
+                                checkDuplicates = true;
+                                break;
+                            }
                         }
                     }
+                }
+                if (checkDuplicates)
+                {
+                    Console.WriteLine("Nektera data nebyla zpracovana");
+                    Console.ReadKey();
                 }
             }
         }
@@ -307,6 +297,7 @@ namespace StudentyZnamky
 
         static void Main(string[] args)
         {
+            //All data are stored in this List
             List<StudentSubject> studentSubject = new List<StudentSubject>();
 
             char answer;
@@ -331,9 +322,11 @@ namespace StudentyZnamky
                 Console.WriteLine("Vymazat predmet [k]");
                 Console.WriteLine("Vymazat data [d]");
                 Console.WriteLine("Zmenit znamku studenta [z]");
+                Console.WriteLine("-----------");
                 Console.WriteLine("To quit [q]");
                 Console.WriteLine("-----------");
                 Console.Write("Zadejte akci: ");
+
                 answer = char.ToLower(Console.ReadKey().KeyChar);
 
                 switch (answer)
@@ -378,7 +371,6 @@ namespace StudentyZnamky
                         //Delete the same data
                         StudentSubject.DeleteDuplicates(studentSubject);
 
-                        //C:\Users\ilyas\source\repos\StudentyZnamky\studsubj.csv
                         //Sorting data by ID
                         studentSubject.Sort();
                         break;
@@ -519,6 +511,13 @@ namespace StudentyZnamky
                     case 'y':
                         Console.Clear();
 
+                        if (studentSubject.Count == 0)
+                        {
+                            Console.WriteLine("Nemate zadna data nactena");
+                            Console.ReadLine();
+                            break;
+                        }                            
+
                         //Generates a name of a file
                         string csvFilePath = $"data{csvFileCount}.csv";
 
@@ -540,6 +539,13 @@ namespace StudentyZnamky
                     //Save data to an XML file
                     case 't':
                         Console.Clear();
+
+                        if (studentSubject.Count == 0)
+                        {
+                            Console.WriteLine("Nemate zadna data nactena");
+                            Console.ReadLine();
+                            break;
+                        }
 
                         //Generates a name of a file
                         string xmlFilePath = $"data{xmlFileCount}.xml";
@@ -586,6 +592,12 @@ namespace StudentyZnamky
                     case 'h':
                         Console.Clear();
 
+                        Console.WriteLine("Chcete znamku studenta? [y]");
+                        if (Console.ReadKey().KeyChar != 'y')
+                            break;
+
+                        Console.Clear();
+
                         //Checks if student ID is a number and has the right format
                         Console.Write("Zadejte id studenta: ");
                         while (!int.TryParse(Console.ReadLine(), out studID) || studID < 0)
@@ -618,6 +630,12 @@ namespace StudentyZnamky
                     case 'j':
                         Console.Clear();
 
+                        Console.WriteLine("Chcete vymazat studenta? [y]");
+                        if (Console.ReadKey().KeyChar != 'y')
+                            break;
+
+                        Console.Clear();
+
                         //Checks if entered student ID is a number
                         Console.Write("Zadejte id studenta: ");
                         while (!int.TryParse(Console.ReadLine(), out studID) || studID < 0)
@@ -640,6 +658,12 @@ namespace StudentyZnamky
 
                     //Delete all data of a subject
                     case 'k':
+                        Console.Clear();
+
+                        Console.WriteLine("Chcete vymazat predmet? [y]");
+                        if (Console.ReadKey().KeyChar != 'y')
+                            break;
+
                         Console.Clear();
 
                         //Checks if entered subject ID is a number
@@ -667,7 +691,7 @@ namespace StudentyZnamky
                         Console.Clear();
 
                         //To make sure user wants to delete data
-                        Console.WriteLine("Chcete smazat data? [y]");
+                        Console.WriteLine("Chcete vymazat data? [y]");
                         if (Console.ReadKey().KeyChar == 'y')
                             studentSubject.Clear();
                         break;
