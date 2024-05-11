@@ -6,6 +6,8 @@ using System.Diagnostics;
 using System.Xml;
 using System.Threading;
 using System.Xml.Serialization;
+using System.Security.Cryptography;
+using System.Xml.Linq;
 
 namespace StudentyZnamky
 {
@@ -124,14 +126,55 @@ namespace StudentyZnamky
 
                 return this.Subject.SubjectID.CompareTo(other.Subject.SubjectID);
             }
+            /*
+             * Overriden method Equals()
+             * Needed to compare StudentSubject
+             * Method compares data by student ID and subject ID
+             */
+            public override bool Equals(object obj)
+            {
+                if (obj == null || !(obj is StudentSubject))
+                {
+                    return false;
+                }
+
+                StudentSubject other = (StudentSubject)obj;
+                return this.Student.StudentID.Equals(other.Student.StudentID) &&
+                       this.Subject.SubjectID.Equals(other.Subject.SubjectID);
+            }
+
+            /*
+             * DeleteDuplicates() deletes the same data if exist
+             * Going through List in reverse to be able to
+             * Delete and rewrite data at the same time
+             * Because List.Remove() shifts indexes whene data gets deleted
+             */
+            public static void DeleteDuplicates(List<StudentSubject> studentSubject)
+            {
+                for (int i = studentSubject.Count - 1; i >= 0; i--)
+                {
+                    for (int j = i - 1; j >= 0; j--)
+                    {
+                        if (studentSubject[i].Equals(studentSubject[j]))
+                        {
+                            studentSubject[j] = studentSubject[i];
+                            studentSubject.Remove(studentSubject[j]);
+                            break;
+                        }
+                    }
+                }
+            }
         }
 
         /*
-         * Method reads a CSV file and returns a List of string arrays
+         * Method reads a CSV file and returns a List of StudentSubject
          */
-        static List<string[]> ReadFromCSV(string rootPath)
+        static List<StudentSubject> ReadFromCSV(string rootPath)
         {
-            List<string[]> data = new List<string[]>();
+            List<StudentSubject> studentSubject = new List<StudentSubject>();
+
+            bool csvFormatCheck = true;
+            int tempInt;
 
             try
             {
@@ -141,7 +184,38 @@ namespace StudentyZnamky
                     {
                         string line = reader.ReadLine();
                         string[] values = line.Split(',');
-                        data.Add(values);
+                        
+                        //if's are needed to check if a csv file has the right format and valid data
+                        if (values.Length != 6)
+                        {
+                            csvFormatCheck = false;
+                            continue;
+                        }
+
+                        if (!int.TryParse(values[0], out tempInt) || tempInt <= 0)
+                        {
+                            csvFormatCheck = false;
+                            continue;
+                        }
+
+                        if (!int.TryParse(values[3], out tempInt) || tempInt <= 0)
+                        {
+                            csvFormatCheck = false;
+                            continue;
+                        }
+
+                        if (!int.TryParse(values[5], out tempInt) || tempInt > 4 || tempInt < 1)
+                        {
+                            csvFormatCheck = false;
+                            continue;
+                        }
+
+                        studentSubject.Add(new StudentSubject
+                        {
+                            Student = new Student { StudentID = int.Parse(values[0]), Firstname = values[1], Lastname = values[2] },
+                            Subject = new Subject { SubjectID = int.Parse(values[3]), Name = values[4] },
+                            Grade = int.Parse(values[5])
+                        });
                     }
                 }
             }
@@ -150,75 +224,84 @@ namespace StudentyZnamky
                 Console.WriteLine(ex.Message);
                 Console.ReadKey();
             }
-            return data;
+            //This massage will be printed if data has problems
+            if (!csvFormatCheck)
+            {
+                Console.WriteLine("Nektera data nebyla zpracovana");
+                Console.ReadKey();
+            }
+
+            return studentSubject;
         }
 
         /*
          * Method reads an XML file and returns a List of StudentSubject
-         * 
-         * List<string> tempStudSubj will be storing every data from a root <student>
-         * And will be cleared every time a root is finished
          */
         static List<StudentSubject> ReadFromXML(string rootPath)
         {
-            List<string> tempStudSubj = new List<string>();
             List<StudentSubject> studentSubject = new List<StudentSubject>();
-            
+            bool xmlFormatCheck = true;
+            int tempInt;
+
             XmlDocument xDoc = new XmlDocument();
             try
             {
-                xDoc.Load(rootPath);
+                XDocument xmlDoc = XDocument.Load(rootPath);
+
+                foreach (XElement studentElement in xmlDoc.Descendants("student"))
+                {
+                    if (studentElement.Element("studentid") == null ||
+                    studentElement.Element("firstname") == null ||
+                    studentElement.Element("lastname") == null ||
+                    studentElement.Element("subjectid") == null ||
+                    studentElement.Element("subjectname") == null ||
+                    studentElement.Element("grade") == null)
+                    {
+                        xmlFormatCheck = false;
+                        continue;
+                    }
+
+                    if (!int.TryParse(studentElement.Element("studentid").Value, out tempInt))
+                    {
+                        xmlFormatCheck = false;
+                        continue;
+                    }
+
+                    if (!int.TryParse(studentElement.Element("subjectid").Value, out tempInt))
+                    {
+                        xmlFormatCheck = false;
+                        continue;
+                    }
+
+                    if (!int.TryParse(studentElement.Element("grade").Value, out tempInt))
+                    {
+                        xmlFormatCheck = false;
+                        continue;
+                    }
+
+                    studentSubject.Add(new StudentSubject
+                    {
+                        Student = new Student { StudentID = int.Parse(studentElement.Element("studentid").Value),
+                                                Firstname = studentElement.Element("firstname").Value,
+                                                Lastname = studentElement.Element("lastname").Value },
+                        Subject = new Subject { SubjectID = int.Parse(studentElement.Element("subjectid").Value),
+                                                Name = studentElement.Element("subjectname").Value },
+                        Grade = int.Parse(studentElement.Element("grade").Value)
+                    });
+                }
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
                 Console.ReadKey();
             }
-            XmlElement? xRoot = xDoc.DocumentElement;
 
-            if (xRoot != null)
+
+            if (!xmlFormatCheck)
             {
-                foreach (XmlElement xnode in xRoot)
-                {
-                    foreach(XmlNode childnode in xnode.ChildNodes)
-                    {
-                        //Looking for elements and storing data using switch case
-                        switch (childnode.Name)
-                        {
-                            case "studentid":
-                                tempStudSubj.Add(childnode.InnerText);
-                                break;
-                            case "firstname":
-                                tempStudSubj.Add(childnode.InnerText);
-                                break;
-                            case "lastname":
-                                tempStudSubj.Add(childnode.InnerText);
-                                break;
-                            case "subjectid":
-                                tempStudSubj.Add(childnode.InnerText);
-                                break;
-                            case "subjectname":
-                                tempStudSubj.Add(childnode.InnerText);
-                                break;
-                            case "grade":
-                                tempStudSubj.Add(childnode.InnerText);
-                                break;
-                        }
-                    }
-
-                    //Creating a new StudentSubject element and adding to the List
-                    studentSubject.Add(new StudentSubject
-                    {
-                        Student = new Student { StudentID = int.Parse(tempStudSubj[0]), Firstname = tempStudSubj[1], Lastname = tempStudSubj[2] },
-                        Subject = new Subject { SubjectID = int.Parse(tempStudSubj[3]), Name = tempStudSubj[4] },
-                        Grade = int.Parse(tempStudSubj[5])
-                    });
-
-                    //List should be cleared after every cicle of reading one root in XML file
-                    tempStudSubj.Clear();
-                }
+                Console.WriteLine("Nektera data nebyla zpracovana");
+                Console.ReadKey();
             }
-
             return studentSubject;
         }
 
@@ -267,53 +350,58 @@ namespace StudentyZnamky
                             Grade = StudentSubject.AddGrade()
                         });
 
+                        //Delete the same data
+                        StudentSubject.DeleteDuplicates(studentSubject);
+
                         //Sorting data by ID
                         studentSubject.Sort();
 
                         break;
 
-                    //Read data from a CSV file
+                    //Read CSV file
                     case 'c':
                         Console.Clear();
                         Console.Write("Zadejte cestu souboru: ");
                         string pathCsv = Console.ReadLine();
 
-                        List<string[]> dataCsv = ReadFromCSV(pathCsv);
-
-                        /*
-                         * ReadFromCSV method returns List of string arrays
-                         * so it creates new StudentSubject elements
-                         * by indexing each given string
-                         * and calling Constructors of Student and Subject
-                         */
-                        foreach (var row in dataCsv)
+                        string extensionCsv = Path.GetExtension(pathCsv);
+                        if (extensionCsv != ".csv")
                         {
-                            studentSubject.Add(new StudentSubject
-                            {
-                            Student = new Student {StudentID = int.Parse(row[0]), Firstname = row[1], Lastname = row[2]},
-                            Subject = new Subject {SubjectID = int.Parse(row[3]), Name = row[4]},
-                            Grade = int.Parse(row[5])
-                            });
+                            Console.WriteLine("Cesta nebo soubor ma spatny format");
+                            Console.ReadKey();
+                            break;
                         }
 
+                        //Join new data
+                        studentSubject.AddRange(ReadFromCSV(pathCsv));
+
+                        //Delete the same data
+                        StudentSubject.DeleteDuplicates(studentSubject);
+
+                        //C:\Users\ilyas\source\repos\StudentyZnamky\studsubj.csv
                         //Sorting data by ID
                         studentSubject.Sort();
                         break;
 
-                    //Read data from an XML file
+                    //Read XML file
                     case 'b':
                         Console.Clear();
                         Console.Write("Zadejte cestu souboru: ");
                         string pathXml = Console.ReadLine();
 
-                        List<StudentSubject> dataXml = ReadFromXML(pathXml);
+                        string extensionXml = Path.GetExtension(pathXml);
+                        if (extensionXml != ".xml")
+                        {
+                            Console.WriteLine("Cesta nebo soubor ma spatny format");
+                            Console.ReadKey();
+                            break;
+                        }
 
-                        /*
-                         * ReadFromXML methos return a List of StudentSubject
-                         * and it needs to be joined with other data
-                         * by using List.AddRange() here
-                        */
-                        studentSubject.AddRange(dataXml);
+                        //Join new data
+                        studentSubject.AddRange(ReadFromXML(pathXml));
+
+                        //Delete the same data
+                        StudentSubject.DeleteDuplicates(studentSubject);
 
                         //Sorting data by ID
                         studentSubject.Sort();
@@ -526,7 +614,7 @@ namespace StudentyZnamky
                         }
                         break;
 
-                    //Delete all data of one student
+                    //Delete all data of a student
                     case 'j':
                         Console.Clear();
 
