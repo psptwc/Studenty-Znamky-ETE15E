@@ -7,7 +7,7 @@ using System.Linq;
 
 namespace StudentyZnamky
 {
-    internal class Program
+    public class Program
     {
         //Variables used in switch case
         static int xmlFileCount = 1;
