@@ -1,9 +1,19 @@
-﻿using System;
+/*
+Tento kód je součástí univerzitního projektu.
+Sdílen pouze pro vzdělávací účely.
+
+Zakazuje se:
+- Kopírování a předložení tohoto kódu jako vlastního.
+- Použití kódu v akademickém prostředí bez svolení autora.
+
+Více informací naleznete v README.md.
+*/
+
+using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Xml;
 using System.Xml.Linq;
-using System.Linq;
 
 namespace StudentyZnamky
 {
